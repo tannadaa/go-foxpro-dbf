@@ -14,8 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/carlosjhr64/jd"
 )
 
 var (
@@ -443,7 +441,7 @@ func (dbf *DBF) parseDateTime(raw []byte) (time.Time, error) {
 	julDat := int(binary.LittleEndian.Uint32(raw[:4]))
 	mSec := int(binary.LittleEndian.Uint32(raw[4:]))
 	// determine year, month, day
-	y, m, d := jd.J2YMD(julDat)
+	y, m, d := J2YMD(julDat)
 	if y < 0 || y > 9999 {
 		// TODO some dbf files seem to contain invalid dates, not sure if we want treat this an error until I know what is going on
 		return time.Time{}, nil
@@ -767,4 +765,18 @@ func readFPTHeader(r io.ReadSeeker) (*FPTHeader, error) {
 // file has a valid version flag.
 func SetValidFileVersionFunc(f func(version byte) error) {
 	ValidFileVersionFunc = f
+}
+
+func J2YMD(d int) (int, int, int) {
+	l := d + 68569
+	n := 4 * l / 146097
+	l = l - (146097*n+3)/4
+	i := 4000 * (l + 1) / 1461001
+	l = l - 1461*i/4 + 31
+	j := 80 * l / 2447
+	k := l - 2447*j/80
+	l = j / 11
+	j = j + 2 - 12*l
+	i = 100*(n-49) + i + l
+	return i, j, k
 }
